@@ -1,0 +1,28 @@
+{
+  "name": "flat-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for apartment hunting in Belgrade",
+  "author": "Birra05",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "node --loader ts-node/esm --experimental-specifier-resolution=node src/index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "axios": "^1.13.4",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.2.3",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
