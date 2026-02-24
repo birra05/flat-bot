@@ -4,6 +4,9 @@ export interface Apartment {
   price: number;
   currency: string;
   location: string;
+  size?: number;
+  floor?: number;
+  rooms?: number;
   url: string;
   source: string;
   imageUrl?: string;

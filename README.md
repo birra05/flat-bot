@@ -45,6 +45,29 @@ Start the bot:
 npm start
 ```
 
+## Docker
+
+1. Build image:
+   ```bash
+   docker build -t flat-bot .
+   ```
+
+2. Run container:
+   ```bash
+   docker run -d \
+     --name flat-bot \
+     --restart unless-stopped \
+     --env-file .env \
+     -v "$(pwd)/data:/app/data" \
+     flat-bot
+   ```
+
+Or run with Compose (recommended):
+
+```bash
+docker compose up -d --build
+```
+
 The bot will:
 1.  Perform an initial scrape immediately.
 2.  Send notifications for any *new* apartments found.
