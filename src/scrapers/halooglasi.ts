@@ -32,7 +32,7 @@ export async function scrapeHaloOglasi(params: SearchParams): Promise<Apartment[
     const apartments: Apartment[] = [];
 
     // Strategy: Extract QuidditaEnvironment.serverListData
-    $('script').each((i, el) => {
+    $('script').each((_, el) => {
       const content = $(el).html() || '';
       if (content.includes('QuidditaEnvironment.serverListData')) {
         const match = content.match(/QuidditaEnvironment\.serverListData\s*=\s*({[\s\S]*?});/);

@@ -14,7 +14,6 @@ A Telegram bot that helps you find rental apartments in Belgrade, Serbia. It aut
 
 - Node.js v22+
 - A Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
-- A Telegram Chat ID (to send messages to)
 
 ## Setup
 
@@ -33,7 +32,6 @@ A Telegram bot that helps you find rental apartments in Belgrade, Serbia. It aut
     Create a `.env` file in the root directory:
     ```bash
     BOT_TOKEN=your_telegram_bot_token
-    CHAT_ID=your_telegram_chat_id
     CHECK_INTERVAL=10800000 # Time in ms (e.g., 3 hours = 10800000)
     ```
 
@@ -72,6 +70,9 @@ The bot will:
 1.  Perform an initial scrape immediately.
 2.  Send notifications for any *new* apartments found.
 3.  Schedule the next check based on your `CHECK_INTERVAL` (+ random jitter).
+
+Any user can open the bot and run `/start` to subscribe to autopilot notifications.  
+Run `/stop` to unsubscribe.
 
 ## Development
 

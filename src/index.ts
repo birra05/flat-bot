@@ -1,18 +1,46 @@
 import 'dotenv/config';
 import { bot } from './bot.js';
 import { Storage } from './storage.js';
+import { subscriberStorage } from './subscribers.js';
 import { scrapeCityExpert } from './scrapers/cityexpert.js';
 import { scrapeHaloOglasi } from './scrapers/halooglasi.js';
 import type { Apartment } from './types.js';
 
 const CHECK_INTERVAL = process.env.CHECK_INTERVAL ? parseInt(process.env.CHECK_INTERVAL) : 3 * 60 * 60 * 1000; // 3 hours default
-const CHAT_ID = process.env.CHAT_ID;
-
-if (!CHAT_ID) {
-  console.warn('WARNING: CHAT_ID not defined in .env. Autopilot notifications will not work.');
-}
 
 const storage = new Storage();
+const BOT_COMMANDS = [
+  { command: 'start', description: 'Подписаться на автопоиск' },
+  { command: 'search', description: 'Поиск квартир вручную' },
+  { command: 'stop', description: 'Отписаться от автопоиска' }
+];
+
+async function registerBotCommands() {
+  try {
+    // Reset command menu explicitly to avoid stale cached scopes.
+    await bot.telegram.deleteMyCommands();
+    await bot.telegram.deleteMyCommands({ scope: { type: 'all_private_chats' } });
+
+    await bot.telegram.setMyCommands(BOT_COMMANDS);
+    await bot.telegram.setMyCommands(BOT_COMMANDS, { scope: { type: 'all_private_chats' } });
+
+    const activeCommands = await bot.telegram.getMyCommands();
+    console.log('Registered bot commands:', activeCommands.map((c) => c.command).join(', '));
+  } catch (error: any) {
+    console.error('Failed to register bot commands:', error.message);
+  }
+}
+
+async function sendToAllChats(message: string) {
+  const subscribers = await subscriberStorage.getAll();
+  if (subscribers.length === 0) return;
+
+  await Promise.allSettled(
+    subscribers.map((chatId) =>
+      bot.telegram.sendMessage(chatId, message, { parse_mode: 'HTML' })
+    )
+  );
+}
 
 // Autopilot function
 async function runAutopilot() {
@@ -39,17 +67,13 @@ async function runAutopilot() {
       
       for (const apt of newApartments) {
         // Send notification
-        if (CHAT_ID) {
-          await bot.telegram.sendMessage(
-            CHAT_ID, 
-            `🆕 <b>New Flat (${apt.source})</b>\n\n` +
-            `${apt.title}\n` +
-            `💰 ${apt.price} ${apt.currency}\n` +
-            `📍 ${apt.location}\n` +
-            `${apt.url}`,
-            { parse_mode: 'HTML' }
-          );
-        }
+        await sendToAllChats(
+          `🆕 <b>New Flat (${apt.source})</b>\n\n` +
+          `${apt.title}\n` +
+          `💰 ${apt.price} ${apt.currency}\n` +
+          `📍 ${apt.location}\n` +
+          `${apt.url}`
+        );
         
         // Mark as seen
         storage.add(apt);
@@ -65,18 +89,16 @@ async function runAutopilot() {
     console.error('Autopilot error:', error.message);
     
     // Alert on blocking
-    if (CHAT_ID && error.response) {
+    if (error.response) {
         const status = error.response.status;
         if (status === 403 || status === 429) {
              const url = error.config?.url || 'unknown source';
              // Extract source name from URL
              const source = url.includes('cityexpert') ? 'CityExpert' : (url.includes('halooglasi') ? 'HaloOglasi' : 'Unknown');
              
-             await bot.telegram.sendMessage(
-                 CHAT_ID,
-                 `⚠️ <b>Внимание! Блокировка (${source})</b>\n\n` +
-                 `Получен статус ${status}. Рекомендуется увеличить интервал проверки.`,
-                 { parse_mode: 'HTML' }
+             await sendToAllChats(
+               `⚠️ <b>Внимание! Блокировка (${source})</b>\n\n` +
+               `Получен статус ${status}. Рекомендуется увеличить интервал проверки.`
              );
         }
     }
@@ -84,7 +106,8 @@ async function runAutopilot() {
 }
 
 // Start bot
-bot.launch(() => {
+bot.launch(async () => {
+    await registerBotCommands();
     console.log('Bot started!');
 });
 
